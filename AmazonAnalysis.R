@@ -13,7 +13,7 @@ library(tidymodels)
 
 
 # Load the data -----------------------------------------------------------
-setwd('~/College/Stat348/AmazonEmployeeAccess')
+# setwd('~/College/Stat348/AmazonEmployeeAccess')
 
 # Load data
 amazon_train <- vroom('./train.csv')
