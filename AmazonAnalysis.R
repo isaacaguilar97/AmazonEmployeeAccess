@@ -74,7 +74,10 @@ amazon_predictions <- predict(amazon_workflow,
 #   mutate(Action = ifelse(.pred_1 > 0.99, 1, 0))
 
 # Format table
-amazon_test$Action <- amazon_predictions$.pred_
+
+
+
+amazon_test$Action <- amazon_predictions$.pred_1
 results <- amazon_test %>%
   rename(Id = id) %>%
   select(Id, Action)
