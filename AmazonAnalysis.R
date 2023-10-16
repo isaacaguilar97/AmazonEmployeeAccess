@@ -194,11 +194,23 @@ bestTune <- CV_results %>%
 
 ## Finalize workflow and predict
 
-final_wf <- rf_wf %>% 
+final_wf <- amazon_workflow %>% 
   finalize_workflow(bestTune) %>% 
   fit(data=amazon_train)
 
 amazon_pred_rf <- final_wf %>%
   predict(new_data = amazon_test)
+
+
+# Format table
+amazon_test$Action <- amazon_predictions$.pred_1
+results <- amazon_test %>%
+  rename(Id = id) %>%
+  select(Id, Action)
+
+
+# get csv file
+vroom_write(results, 'AmazonPredspreg.csv', delim = ",")
+# penalty is first and mixture is second
 
 stopCluster(cl)
