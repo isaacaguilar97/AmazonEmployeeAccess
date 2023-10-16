@@ -198,10 +198,12 @@ final_wf <- amazon_workflow %>%
   finalize_workflow(bestTune) %>% 
   fit(data=amazon_train)
 
-amazon_pred_rf <- final_wf %>%
+amazon_predictions <- final_wf %>%
   predict(new_data = amazon_test)
 
+save(file="./MyFile.RData", list=c("amazon_predictions", "final_wf", "bestTune", "CV_results"))
 
+colnames(amazon_predictions)
 # Format table
 amazon_test$Action <- amazon_predictions$.pred_1
 results <- amazon_test %>%
