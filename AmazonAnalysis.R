@@ -161,9 +161,9 @@ my_mod <- rand_forest(mtry = tune(),
   set_mode("classification")
 
 my_recipe <- recipe(ACTION~., data=amazon_train) %>%
-  step_mutate_at(all_numeric_predictors(), fn = factor) %>% # turn all numeric features into factors
-  step_other(all_nominal_predictors(), threshold = .01) %>% # combines categorical values that occur <5% into an "other" value
-  step_dummy(all_nominal_predictors()) # dummy variable encoding
+  step_mutate_at(all_numeric_predictors(), fn = factor) # turn all numeric features into factors
+  # step_other(all_nominal_predictors(), threshold = .01) %>% # combines categorical values that occur <5% into an "other" value
+  # step_dummy(all_nominal_predictors()) # dummy variable encoding
 # step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION)) #target encoding
 
 ## Create a workflow with model & recipe
@@ -178,10 +178,10 @@ amazon_workflow <- workflow() %>%
 tuning_grid <- grid_regular(mtry(range = c(1,ncol(amazon_train)-1)), # How many Variables to choose from 
                             # researches have found log of total variables is enough
                             min_n(), # Number of observations in a leaf
-                            levels = 3)
+                            levels = 5)
 
 ## Set up K-fold CV
-folds <- vfold_cv(amazon_train, v = 5, repeats=1)
+folds <- vfold_cv(amazon_train, v = 10, repeats=1)
 
 CV_results <- amazon_workflow %>%
   tune_grid(resamples=folds,
@@ -203,7 +203,6 @@ amazon_predictions <- final_wf %>%
 
 save(file="./MyFile.RData", list=c("amazon_predictions", "final_wf", "bestTune", "CV_results"))
 
-colnames(amazon_predictions)
 # Format table
 amazon_test$Action <- amazon_predictions$.pred_class
 results <- amazon_test %>%
@@ -213,6 +212,5 @@ results <- amazon_test %>%
 
 # get csv file
 vroom_write(results, 'AmazonPredspreg.csv', delim = ",")
-# penalty is first and mixture is second
 
 stopCluster(cl)
