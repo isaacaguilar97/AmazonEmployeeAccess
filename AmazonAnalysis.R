@@ -161,9 +161,9 @@ my_mod <- rand_forest(mtry = tune(),
   set_mode("classification")
 
 my_recipe <- recipe(ACTION~., data=amazon_train) %>%
-  step_mutate_at(all_numeric_predictors(), fn = factor) # turn all numeric features into factors
-  # step_other(all_nominal_predictors(), threshold = .01) %>% # combines categorical values that occur <5% into an "other" value
-  # step_dummy(all_nominal_predictors()) # dummy variable encoding
+  step_mutate_at(all_numeric_predictors(), fn = factor)  %>% # turn all numeric features into factors
+  step_other(all_nominal_predictors(), threshold = .01) %>% # combines categorical values that occur <5% into an "other" value
+  step_dummy(all_nominal_predictors()) # dummy variable encoding
 # step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION)) #target encoding
 
 ## Create a workflow with model & recipe
@@ -199,12 +199,12 @@ final_wf <- amazon_workflow %>%
   fit(data=amazon_train)
 
 amazon_predictions <- final_wf %>%
-  predict(new_data = amazon_test)
+  predict(new_data = amazon_test, type = "prob")
 
 save(file="./MyFile.RData", list=c("amazon_predictions", "final_wf", "bestTune", "CV_results"))
 
 # Format table
-amazon_test$Action <- amazon_predictions$.pred_class
+amazon_test$Action <- amazon_predictions$.pred_1
 results <- amazon_test %>%
   rename(Id = id) %>%
   select(Id, Action)
