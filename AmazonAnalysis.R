@@ -205,7 +205,7 @@ save(file="./MyFile.RData", list=c("amazon_predictions", "final_wf", "bestTune",
 
 colnames(amazon_predictions)
 # Format table
-amazon_test$Action <- amazon_predictions$.pred_1
+amazon_test$Action <- amazon_predictions$.pred_class
 results <- amazon_test %>%
   rename(Id = id) %>%
   select(Id, Action)
