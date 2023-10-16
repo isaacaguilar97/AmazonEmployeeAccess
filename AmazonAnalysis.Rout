@@ -277,8 +277,8 @@ Warning messages:
 > CV_results <- amazon_workflow %>%
 +   tune_grid(resamples=folds,
 +             grid=tuning_grid,
-+             metrics=metric_set(roc_auc))
-> 
++             metrics> 
+> ## Find best tuni> 
 > ## Find best tuning parameters
 > bestTune <- CV_results %>% 
 +   select_best("roc_auc")
@@ -297,36 +297,18 @@ Warning messages:
 > colnames(amazon_predictions)
 [1] ".pred_class"
 > # Format table
-> amazon_test$Action <- amazon_predictions$.pred_1
-Warning message:
-Unknown or uninitialised column: `.pred_1`. 
+> amazon_test$Action <- amazon_predictions$.pred_class
 > results <- amazon_test %>%
 +   rename(Id = id) %>%
 +   select(Id, Action)
-Error in `select()`:
-! Can't subset columns that don't exist.
-✖ Column `Action` doesn't exist.
-Backtrace:
-     ▆
-  1. ├─amazon_test %>% rename(Id = id) %>% select(Id, Action)
-  2. ├─dplyr::select(., Id, Action)
-  3. ├─dplyr:::select.data.frame(., Id, Action)
-  4. │ └─tidyselect::eval_select(expr(c(...)), data = .data, error_call = error_call)
-  5. │   └─tidyselect:::eval_select_impl(...)
-  6. │     ├─tidyselect:::with_subscript_errors(...)
-  7. │     │ └─rlang::try_fetch(...)
-  8. │     │   └─base::withCallingHandlers(...)
-  9. │     └─tidyselect:::vars_select_eval(...)
- 10. │       └─tidyselect:::walk_data_tree(expr, data_mask, context_mask)
- 11. │         └─tidyselect:::eval_c(expr, data_mask, context_mask)
- 12. │           └─tidyselect:::reduce_sels(node, data_mask, context_mask, init = init)
- 13. │             └─tidyselect:::walk_data_tree(new, data_mask, context_mask)
- 14. │               └─tidyselect:::as_indices_sel_impl(...)
- 15. │                 └─tidyselect:::as_indices_impl(...)
- 16. │                   └─tidyselect:::chr_as_locations(x, vars, call = call, arg = arg)
- 17. │                     └─vctrs::vec_as_location(...)
- 18. └─vctrs (local) `<fn>`()
- 19.   └─vctrs:::stop_subscript_oob(...)
- 20.     └─vctrs:::stop_subscript(...)
- 21.       └─rlang::abort(...)
-Execution halted
+> 
+> 
+> # get csv file
+> vroom_write(results, 'AmazonPredspreg.csv', delim = ",")
+> # penalty is first and mixture is second
+> 
+> stopCluster(cl)
+> 
+> proc.time()
+   user  system elapsed 
+ 55.903   2.777 314.333 
