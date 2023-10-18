@@ -10,6 +10,8 @@ library(vroom)
 library(DataExplorer)
 library(patchwork)
 library(tidymodels)
+library(discrim)
+library(naivebayes)
 
 
 # Load the data -----------------------------------------------------------
@@ -202,6 +204,65 @@ amazon_predictions <- final_wf %>%
   predict(new_data = amazon_test, type = "prob")
 
 save(file="./MyFile.RData", list=c("amazon_predictions", "final_wf", "bestTune", "CV_results"))
+
+# Format table
+amazon_test$Action <- amazon_predictions$.pred_1
+results <- amazon_test %>%
+  rename(Id = id) %>%
+  select(Id, Action)
+
+
+# get csv file
+vroom_write(results, 'AmazonPredspreg.csv', delim = ",")
+
+
+# Naive Bayes -------------------------------------------------------------
+
+
+## nb model3
+nb_model <- naive_Bayes(Laplace=tune(), smoothness=tune()) %>%
+  set_mode("classification") %>%
+  set_engine("naivebayes") # install discrim library for the naivebayes eng
+
+my_recipe <- recipe(ACTION~., data=amazon_train) %>%
+  step_mutate_at(all_numeric_predictors(), fn = factor)  %>% # turn all numeric features into factors
+  step_other(all_nominal_predictors(), threshold = .01) %>% # combines categorical values that occur <5% into an "other" value
+  step_dummy(all_nominal_predictors())
+
+nb_wf <- workflow() %>%
+  add_recipe(my_recipe) %>%
+  add_model(nb_model)
+
+## Tune smoothness and Laplace here
+tuning_grid <- grid_regular(smoothness(),
+                            Laplace(),
+                            levels = 5)
+
+## Set up K-fold CV
+folds <- vfold_cv(amazon_train, v = 10, repeats=1)
+
+CV_results <- nb_wf %>%
+  tune_grid(resamples=folds,
+            grid=tuning_grid,
+            metrics=metric_set(MSE))
+
+## Find best tuning parameters
+bestTune <- CV_results %>% 
+  select_best("roc_auc")
+
+## Finalize workflow and predict
+
+final_wf <- nb_wf %>% 
+  finalize_workflow(bestTune) %>% 
+  fit(data=amazon_train)
+
+## Predict
+#predict(nb_wf, new_data=myNewData, type=)
+
+amazon_predictions <- final_wf %>%
+  predict(new_data = amazon_test, type = "prob")
+
+#save(file="./MyFile.RData", list=c("amazon_predictions", "final_wf", "bestTune", "CV_results"))
 
 # Format table
 amazon_test$Action <- amazon_predictions$.pred_1
