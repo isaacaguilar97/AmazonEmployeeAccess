@@ -322,7 +322,7 @@ final_wf <- knn_wf %>%
 amazon_predictions <- final_wf %>%
   predict(new_data = amazon_test, type = "prob")
 
-#save(file="./MyFile.RData", list=c("amazon_predictions", "final_wf", "bestTune", "CV_results"))
+save(file="./MyFile.RData", list=c("amazon_predictions", "final_wf", "bestTune", "CV_results"))
 
 # Format table
 amazon_test$Action <- amazon_predictions$.pred_1
@@ -330,4 +330,5 @@ results <- amazon_test %>%
   rename(Id = id) %>%
   select(Id, Action)
 
+vroom_write(results, 'AmazonPredspreg.csv', delim = ",")
 stopCluster(cl)
