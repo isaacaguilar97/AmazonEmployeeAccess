@@ -384,7 +384,7 @@ dbl (10): id, RESOURCE, MGR_ID, ROLE_ROLLUP_1, ROLE_ROLLUP_2, ROLE_DEPTNAME,...
 > my_recipe <- recipe(ACTION~., data=amazon_train) %>%
 +   step_mutate_at(all_numeric_predictors(), fn = factor)  %>% # turn all numeric features into factors
 +   step_other(all_nominal_predictors(), threshold = .01) %>% # combines categorical values that occur <5% into an "other" value
-+   step_dummy(all_nominal_predictors()) %>%
++   step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION)) %>%
 +   step_normalize(all_numeric_predictors())
 > 
 > ## Workflow
@@ -413,6 +413,9 @@ dbl (10): id, RESOURCE, MGR_ID, ROLE_ROLLUP_1, ROLE_ROLLUP_2, ROLE_DEPTNAME,...
 > final_wf <- knn_wf %>% 
 +   finalize_workflow(bestTune) %>% 
 +   fit(data=amazon_train)
+boundary (singular) fit: see help('isSingular')
+Warning message:
+Column(s) have zero variance so scaling cannot be used: `MGR_ID`. Consider using `step_zv()` to remove those columns before normalizing 
 > 
 > ## Fit or Tune Model HERE
 > amazon_predictions <- final_wf %>%
@@ -431,4 +434,4 @@ dbl (10): id, RESOURCE, MGR_ID, ROLE_ROLLUP_1, ROLE_ROLLUP_2, ROLE_DEPTNAME,...
 > 
 > proc.time()
    user  system elapsed 
-249.866   1.711 674.522 
+ 89.970   1.471 268.641 
