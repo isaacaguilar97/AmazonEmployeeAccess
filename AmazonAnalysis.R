@@ -288,7 +288,7 @@ knn_model <- nearest_neighbor(neighbors=tune()) %>% # set or tune
 my_recipe <- recipe(ACTION~., data=amazon_train) %>%
   step_mutate_at(all_numeric_predictors(), fn = factor)  %>% # turn all numeric features into factors
   step_other(all_nominal_predictors(), threshold = .01) %>% # combines categorical values that occur <5% into an "other" value
-  step_dummy(all_nominal_predictors()) %>%
+  step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION)) %>%
   step_normalize(all_numeric_predictors())
 
 ## Workflow
