@@ -231,6 +231,8 @@ my_recipe <- recipe(ACTION~., data=amazon_train) %>%
   step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION)) %>%
   step_pca(all_predictors(), threshold=.9) #Threshold is between 0 and 1
 
+bake(my_recipe, new_data = amazon_train)
+
 nb_wf <- workflow() %>%
   add_recipe(my_recipe) %>%
   add_model(nb_model)
@@ -246,7 +248,7 @@ folds <- vfold_cv(amazon_train, v = 10, repeats=1)
 CV_results <- nb_wf %>%
   tune_grid(resamples=folds,
             grid=tuning_grid,
-            metrics=metric_set(MSE))
+            metrics=metric_set(roc_auc))
 
 ## Find best tuning parameters
 bestTune <- CV_results %>%
