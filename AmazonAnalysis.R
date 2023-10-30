@@ -48,99 +48,99 @@ amazon_test <- vroom('./test.csv')
 # train_clean <- bake(prep, new_data = amazon_train)
 
 #
-# LOGISTIC REGRESSION -----------------------------------------------------
-
-# Set my recipe
-my_recipe <- recipe(ACTION~., data=amazon_train) %>%
-  step_mutate_at(all_numeric_predictors(), fn = factor) %>% # turn all numeric features into factors
-  step_other(all_nominal_predictors(), threshold = .001) %>% # combines categorical values that occur <5% into an "other" value
-  step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION)) %>% #target encoding
-  step_normalize(all_numeric_predictors()) %>%
-  step_pca(all_predictors(), threshold=.9) %>% # Reduce your matrix
-  step_smote(all_outcomes(), neighbors=5)
-
-# Create model
-lg_mod <- logistic_reg() %>% #Type of model
-  set_engine("glm")
-
-#Define Worflow
-amazon_workflow <- workflow() %>%
-  add_recipe(my_recipe) %>%
-  add_model(lg_mod) %>%
-  fit(data = amazon_train) # Fit the workflow
-
-# Get Predictions
-amazon_predictions <- predict(amazon_workflow,
-                              new_data=amazon_test,
-                              type="prob") # "class" or "prob" (see doc)
-
-amazon_test$Action <- amazon_predictions$.pred_1
-results <- amazon_test %>%
-  rename(Id = id) %>%
-  select(Id, Action)
-
-
-# get csv file
-vroom_write(results, 'AmazonPredlg.csv', delim = ",")
-
-
-# PENALIZED LOGISTIC REGRESSION -------------------------------------------
-# ROC across all possible cut offs
-
-# Recipe
-my_recipe <- recipe(ACTION~., data=amazon_train) %>%
-  step_mutate_at(all_numeric_predictors(), fn = factor) %>% # turn all numeric features into factors
-  step_other(all_nominal_predictors(), threshold = .001) %>% # combines categorical values that occur <5% into an "other" value
-  step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION)) %>% #target encoding
-  step_normalize(all_numeric_predictors()) %>%
-  step_pca(all_predictors(), threshold=.9) %>% # Reduce your matrix
-  step_smote(all_outcomes(), neighbors=5)
-
-# Model
-plg_mod <- logistic_reg(mixture=tune(), penalty=tune()) %>% #Type of model
-  set_engine("glmnet")
-
-# Workflow
-amazon_workflow <- workflow() %>% 
-  add_recipe(my_recipe) %>% 
-  add_model(plg_mod)
-
-## Grid of values to tune over
-tuning_grid <- grid_regular(penalty(),
-                            mixture(),
-                            levels = 5) ## L^2 total tuning possibilities
-
-## Split data for CV
-folds <- vfold_cv(amazon_train, v = 5, repeats=1)
-
-## Run the CV
-CV_results <- amazon_workflow %>%
-  tune_grid(resamples=folds,
-          grid=tuning_grid,
-          metrics=metric_set(roc_auc)) # they will all use a cut off of .5
-
-## Find best tuning parameters
-bestTune <- CV_results %>%
-  select_best("roc_auc")
-
-## Finalize workflow and predict
-final_wf <- amazon_workflow %>%
-  finalize_workflow(bestTune) %>%
-  fit(data=amazon_train)
-
-amazon_predictions <- final_wf %>%
-  predict(new_data = amazon_test, type = "prob")
-
-# Format table
-amazon_test$Action <- amazon_predictions$.pred_1
-results <- amazon_test %>%
-  rename(Id = id) %>%
-  select(Id, Action)
-
-# get csv file
-vroom_write(results, 'AmazonPredsplg.csv', delim = ",")
-# penalty is first and mixture is second
-
+# # LOGISTIC REGRESSION -----------------------------------------------------
+# 
+# # Set my recipe
+# my_recipe <- recipe(ACTION~., data=amazon_train) %>%
+#   step_mutate_at(all_numeric_predictors(), fn = factor) %>% # turn all numeric features into factors
+#   step_other(all_nominal_predictors(), threshold = .001) %>% # combines categorical values that occur <5% into an "other" value
+#   step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION)) %>% #target encoding
+#   step_normalize(all_numeric_predictors()) %>%
+#   step_pca(all_predictors(), threshold=.9) %>% # Reduce your matrix
+#   step_smote(all_outcomes(), neighbors=5)
+# 
+# # Create model
+# lg_mod <- logistic_reg() %>% #Type of model
+#   set_engine("glm")
+# 
+# #Define Worflow
+# amazon_workflow <- workflow() %>%
+#   add_recipe(my_recipe) %>%
+#   add_model(lg_mod) %>%
+#   fit(data = amazon_train) # Fit the workflow
+# 
+# # Get Predictions
+# amazon_predictions <- predict(amazon_workflow,
+#                               new_data=amazon_test,
+#                               type="prob") # "class" or "prob" (see doc)
+# 
+# amazon_test$Action <- amazon_predictions$.pred_1
+# results <- amazon_test %>%
+#   rename(Id = id) %>%
+#   select(Id, Action)
+# 
+# 
+# # get csv file
+# vroom_write(results, 'AmazonPredlg.csv', delim = ",")
+# 
+# 
+# # PENALIZED LOGISTIC REGRESSION-------------------------------------------
+# # ROC across all possible cut offs
+# 
+# # Recipe
+# my_recipe <- recipe(ACTION~., data=amazon_train) %>%''
+#   step_mutate_at(all_numeric_predictors(), fn = factor) %>% # turn all numeric features into factors
+#   step_other(all_nominal_predictors(), threshold = .001) %>% # combines categorical values that occur <5% into an "other" value
+#   step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION)) %>% #target encoding
+#   step_normalize(all_numeric_predictors()) %>%
+#   step_pca(all_predictors(), threshold=.9) %>% # Reduce your matrix
+#   step_smote(all_outcomes(), neighbors=5)
+# 
+# # Model
+# plg_mod <- logistic_reg(mixture=tune(), penalty=tune()) %>% #Type of model
+#   set_engine("glmnet")
+# 
+# # Workflow
+# amazon_workflow <- workflow() %>% 
+#   add_recipe(my_recipe) %>% 
+#   add_model(plg_mod)
+# 
+# ## Grid of values to tune over
+# tuning_grid <- grid_regular(penalty(),
+#                             mixture(),
+#                             levels = 5) ## L^2 total tuning possibilities
+# 
+# ## Split data for CV
+# folds <- vfold_cv(amazon_train, v = 5, repeats=1)
+# 
+# ## Run the CV
+# CV_results <- amazon_workflow %>%
+#   tune_grid(resamples=folds,
+#           grid=tuning_grid,
+#           metrics=metric_set(roc_auc)) # they will all use a cut off of .5
+# 
+# ## Find best tuning parameters
+# bestTune <- CV_results %>%
+#   select_best("roc_auc")
+# 
+# ## Finalize workflow and predict
+# final_wf <- amazon_workflow %>%
+#   finalize_workflow(bestTune) %>%
+#   fit(data=amazon_train)
+# 
+# amazon_predictions <- final_wf %>%
+#   predict(new_data = amazon_test, type = "prob")
+# 
+# # Format table
+# amazon_test$Action <- amazon_predictions$.pred_1
+# results <- amazon_test %>%
+#   rename(Id = id) %>%
+#   select(Id, Action)
+# 
+# # get csv file
+# vroom_write(results, 'AmazonPredsplg.csv', delim = ",")
+# # penalty is first and mixture is second
+# 
 
 # RANDOM FOREST  ----------------------------------------------------------
 
