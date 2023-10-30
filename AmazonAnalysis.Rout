@@ -76,7 +76,7 @@ The following objects are masked from ‘package:readr’:
 ✖ dplyr::lag()      masks stats::lag()
 ✖ yardstick::spec() masks vroom::spec(), readr::spec()
 ✖ recipes::step()   masks stats::step()
-• Learn how to get started at https://www.tidymodels.org/start/
+• Dig deeper into tidy modeling with R at https://www.tmwr.org
 > library(discrim)
 
 Attaching package: ‘discrim’
@@ -137,99 +137,99 @@ dbl (10): id, RESOURCE, MGR_ID, ROLE_ROLLUP_1, ROLE_ROLLUP_2, ROLE_DEPTNAME,...
 > # train_clean <- bake(prep, new_data = amazon_train)
 > 
 > #
-> # LOGISTIC REGRESSION -----------------------------------------------------
-> 
-> # Set my recipe
-> my_recipe <- recipe(ACTION~., data=amazon_train) %>%
-+   step_mutate_at(all_numeric_predictors(), fn = factor) %>% # turn all numeric features into factors
-+   step_other(all_nominal_predictors(), threshold = .001) %>% # combines categorical values that occur <5% into an "other" value
-+   step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION)) %>% #target encoding
-+   step_normalize(all_numeric_predictors()) %>%
-+   step_pca(all_predictors(), threshold=.9) %>% # Reduce your matrix
-+   step_smote(all_outcomes(), neighbors=5)
-> 
-> # Create model
-> lg_mod <- logistic_reg() %>% #Type of model
-+   set_engine("glm")
-> 
-> #Define Worflow
-> amazon_workflow <- workflow() %>%
-+   add_recipe(my_recipe) %>%
-+   add_model(lg_mod) %>%
-+   fit(data = amazon_train) # Fit the workflow
-> 
-> # Get Predictions
-> amazon_predictions <- predict(amazon_workflow,
-+                               new_data=amazon_test,
-+                               type="prob") # "class" or "prob" (see doc)
-> 
-> amazon_test$Action <- amazon_predictions$.pred_1
-> results <- amazon_test %>%
-+   rename(Id = id) %>%
-+   select(Id, Action)
-> 
-> 
-> # get csv file
-> vroom_write(results, 'AmazonPredlg.csv', delim = ",")
-> 
-> 
-> # PENALIZED LOGISTIC REGRESSION -------------------------------------------
-> # ROC across all possible cut offs
-> 
-> # Recipe
-> my_recipe <- recipe(ACTION~., data=amazon_train) %>%
-+   step_mutate_at(all_numeric_predictors(), fn = factor) %>% # turn all numeric features into factors
-+   step_other(all_nominal_predictors(), threshold = .001) %>% # combines categorical values that occur <5% into an "other" value
-+   step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION)) %>% #target encoding
-+   step_normalize(all_numeric_predictors()) %>%
-+   step_pca(all_predictors(), threshold=.9) %>% # Reduce your matrix
-+   step_smote(all_outcomes(), neighbors=5)
-> 
-> # Model
-> plg_mod <- logistic_reg(mixture=tune(), penalty=tune()) %>% #Type of model
-+   set_engine("glmnet")
-> 
-> # Workflow
-> amazon_workflow <- workflow() %>% 
-+   add_recipe(my_recipe) %>% 
-+   add_model(plg_mod)
-> 
-> ## Grid of values to tune over
-> tuning_grid <- grid_regular(penalty(),
-+                             mixture(),
-+                             levels = 5) ## L^2 total tuning possibilities
-> 
-> ## Split data for CV
-> folds <- vfold_cv(amazon_train, v = 5, repeats=1)
-> 
-> ## Run the CV
-> CV_results <- amazon_workflow %>%
-+   tune_grid(resamples=folds,
-+           grid=tuning_grid,
-+           metrics=metric_set(roc_auc)) # they will all use a cut off of .5
-> 
-> ## Find best tuning parameters
-> bestTune <- CV_results %>%
-+   select_best("roc_auc")
-> 
-> ## Finalize workflow and predict
-> final_wf <- amazon_workflow %>%
-+   finalize_workflow(bestTune) %>%
-+   fit(data=amazon_train)
-> 
-> amazon_predictions <- final_wf %>%
-+   predict(new_data = amazon_test, type = "prob")
-> 
-> # Format table
-> amazon_test$Action <- amazon_predictions$.pred_1
-> results <- amazon_test %>%
-+   rename(Id = id) %>%
-+   select(Id, Action)
-> 
-> # get csv file
-> vroom_write(results, 'AmazonPredsplg.csv', delim = ",")
-> # penalty is first and mixture is second
-> 
+> # # LOGISTIC REGRESSION -----------------------------------------------------
+> # 
+> # # Set my recipe
+> # my_recipe <- recipe(ACTION~., data=amazon_train) %>%
+> #   step_mutate_at(all_numeric_predictors(), fn = factor) %>% # turn all numeric features into factors
+> #   step_other(all_nominal_predictors(), threshold = .001) %>% # combines categorical values that occur <5% into an "other" value
+> #   step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION)) %>% #target encoding
+> #   step_normalize(all_numeric_predictors()) %>%
+> #   step_pca(all_predictors(), threshold=.9) %>% # Reduce your matrix
+> #   step_smote(all_outcomes(), neighbors=5)
+> # 
+> # # Create model
+> # lg_mod <- logistic_reg() %>% #Type of model
+> #   set_engine("glm")
+> # 
+> # #Define Worflow
+> # amazon_workflow <- workflow() %>%
+> #   add_recipe(my_recipe) %>%
+> #   add_model(lg_mod) %>%
+> #   fit(data = amazon_train) # Fit the workflow
+> # 
+> # # Get Predictions
+> # amazon_predictions <- predict(amazon_workflow,
+> #                               new_data=amazon_test,
+> #                               type="prob") # "class" or "prob" (see doc)
+> # 
+> # amazon_test$Action <- amazon_predictions$.pred_1
+> # results <- amazon_test %>%
+> #   rename(Id = id) %>%
+> #   select(Id, Action)
+> # 
+> # 
+> # # get csv file
+> # vroom_write(results, 'AmazonPredlg.csv', delim = ",")
+> # 
+> # 
+> # # PENALIZED LOGISTIC REGRESSION-------------------------------------------
+> # # ROC across all possible cut offs
+> # 
+> # # Recipe
+> # my_recipe <- recipe(ACTION~., data=amazon_train) %>%''
+> #   step_mutate_at(all_numeric_predictors(), fn = factor) %>% # turn all numeric features into factors
+> #   step_other(all_nominal_predictors(), threshold = .001) %>% # combines categorical values that occur <5% into an "other" value
+> #   step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION)) %>% #target encoding
+> #   step_normalize(all_numeric_predictors()) %>%
+> #   step_pca(all_predictors(), threshold=.9) %>% # Reduce your matrix
+> #   step_smote(all_outcomes(), neighbors=5)
+> # 
+> # # Model
+> # plg_mod <- logistic_reg(mixture=tune(), penalty=tune()) %>% #Type of model
+> #   set_engine("glmnet")
+> # 
+> # # Workflow
+> # amazon_workflow <- workflow() %>% 
+> #   add_recipe(my_recipe) %>% 
+> #   add_model(plg_mod)
+> # 
+> # ## Grid of values to tune over
+> # tuning_grid <- grid_regular(penalty(),
+> #                             mixture(),
+> #                             levels = 5) ## L^2 total tuning possibilities
+> # 
+> # ## Split data for CV
+> # folds <- vfold_cv(amazon_train, v = 5, repeats=1)
+> # 
+> # ## Run the CV
+> # CV_results <- amazon_workflow %>%
+> #   tune_grid(resamples=folds,
+> #           grid=tuning_grid,
+> #           metrics=metric_set(roc_auc)) # they will all use a cut off of .5
+> # 
+> # ## Find best tuning parameters
+> # bestTune <- CV_results %>%
+> #   select_best("roc_auc")
+> # 
+> # ## Finalize workflow and predict
+> # final_wf <- amazon_workflow %>%
+> #   finalize_workflow(bestTune) %>%
+> #   fit(data=amazon_train)
+> # 
+> # amazon_predictions <- final_wf %>%
+> #   predict(new_data = amazon_test, type = "prob")
+> # 
+> # # Format table
+> # amazon_test$Action <- amazon_predictions$.pred_1
+> # results <- amazon_test %>%
+> #   rename(Id = id) %>%
+> #   select(Id, Action)
+> # 
+> # # get csv file
+> # vroom_write(results, 'AmazonPredsplg.csv', delim = ",")
+> # # penalty is first and mixture is second
+> # 
 > 
 > # RANDOM FOREST  ----------------------------------------------------------
 > 
@@ -259,10 +259,9 @@ Warning messages:
 2: tune samples were requested but there were 61744 rows in the data. 61744 will be used. 
 > 
 > ## Set up grid of tuning values
-> tuning_grid <- grid_regular(mtry(range = c(1,ncol(amazon_train)-1)), # How many Variables to choose from
+> tuning_grid <- grid_regular(mtry(range = c(1,6)), # How many Variables to choose from
 +                             # researches have found log of total variables is enough
-+                             min_n(), # Number of observations in a leaf
-+                             levels = 5)
++                             min_n())
 > 
 > # Set up K-fold CV
 > folds <- vfold_cv(amazon_train, v = 5, repeats=1)
@@ -272,42 +271,3 @@ Warning messages:
 +   tune_grid(resamples=folds,
 +             grid=tuning_grid,
 +             metrics=metric_set(roc_auc))
-→ A | warning: 7 columns were requested but there were 6 predictors in the data. 6 will be used.
-There were issues with some computations   A: x1
-→ B | warning: 9 columns were requested but there were 6 predictors in the data. 6 will be used.
-There were issues with some computations   A: x1There were issues with some computations   A: x1   B: x1
-There were issues with some computations   A: x2   B: x1
-There were issues with some computations   A: x2   B: x2
-There were issues with some computations   A: x3   B: x2
-There were issues with some computations   A: x3   B: x3
-There were issues with some computations   A: x4   B: x3
-There were issues with some computations   A: x4   B: x4
-There were issues with some computations   A: x5   B: x4
-There were issues with some computations   A: x5   B: x5
-There were issues with some computations   A: x6   B: x5
-There were issues with some computations   A: x6   B: x6
-There were issues with some computations   A: x7   B: x6
-There were issues with some computations   A: x7   B: x7
-There were issues with some computations   A: x8   B: x7
-There were issues with some computations   A: x8   B: x8
-There were issues with some computations   A: x9   B: x8
-There were issues with some computations   A: x9   B: x9
-There were issues with some computations   A: x10   B: x9
-There were issues with some computations   A: x10   B: x10
-There were issues with some computations   A: x11   B: x10
-There were issues with some computations   A: x11   B: x11
-There were issues with some computations   A: x12   B: x11
-There were issues with some computations   A: x12   B: x12
-There were issues with some computations   A: x13   B: x12
-There were issues with some computations   A: x13   B: x13
-There were issues with some computations   A: x14   B: x13
-There were issues with some computations   A: x14   B: x14
-There were issues with some computations   A: x15   B: x14
-There were issues with some computations   A: x15   B: x15
-There were issues with some computations   A: x16   B: x15
-There were issues with some computations   A: x16   B: x16
-There were issues with some computations   A: x17   B: x16
-There were issues with some computations   A: x17   B: x17
-There were issues with some computations   A: x18   B: x17
-There were issues with some computations   A: x18   B: x18
-There were issues with some computations   A: x19   B: x18

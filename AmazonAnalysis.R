@@ -264,7 +264,6 @@ amazon_test <- vroom('./test.csv')
 # # get csv file
 # vroom_write(results, 'AmazonPredsnb.csv', delim = ",")
 
-
 # # KNN ---------------------------------------------------------------------
 # 
 # # knn model
