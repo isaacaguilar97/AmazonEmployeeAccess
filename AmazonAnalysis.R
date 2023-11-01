@@ -142,68 +142,70 @@ amazon_test <- vroom('./test.csv')
 # # penalty is first and mixture is second
 # 
 
-# # RANDOM FOREST  ----------------------------------------------------------
-# 
-# # Recipe
-# my_recipe <- recipe(ACTION~., data=amazon_train) %>%
-#   step_mutate_at(all_numeric_predictors(), fn = factor) %>% # turn all numeric features into factors
-#   # step_other(all_nominal_predictors(), threshold = .001) %>% # combines categorical values that occur <5% into an "other" value
-#   step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION)) %>% #target encoding
-#   # step_normalize(all_numeric_predictors()) %>%
-#   # step_pca(all_predictors(), threshold=.9) %>% # Reduce your matrix
-#   step_smote(all_outcomes(), neighbors=5)
-# 
-# # Model
-# rf_mod <- rand_forest(mtry = tune(),
-#                       min_n=tune(),
-#                       trees=250) %>%
-#   set_engine("ranger") %>%
-#   set_mode("classification")
-# 
-# ## Workflow
-# amazon_workflow <- workflow() %>%
-#   add_recipe(my_recipe) %>%
-#   add_model(rf_mod) %>%
-#   fit(data = amazon_train)
-# 
-# ## Set up grid of tuning values
-# tuning_grid <- grid_regular(mtry(range = c(1,9)), # How many Variables to choose from
-#                             # researches have found log of total variables is enough
-#                             min_n(), 
-#                             levels = 5)
-# 
-# # Set up K-fold CV
-# folds <- vfold_cv(amazon_train, v = 5, repeats=1)
-# 
-# # Cross Validation
-# CV_results <- amazon_workflow %>%
-#   tune_grid(resamples=folds,
-#             grid=tuning_grid,
-#             metrics=metric_set(roc_auc))
-# 
-# # Find best tuning parameters
-# bestTune <- CV_results %>%
-#   select_best("roc_auc")
-# 
-# # Finalize workflow
-# final_wf <- amazon_workflow %>%
-#   finalize_workflow(bestTune) %>%
-#   fit(data=amazon_train)
-# 
-# # Predict
-# amazon_predictions <- final_wf %>%
-#   predict(new_data = amazon_test, type = "prob")
-# 
-# # save(file="./MyFile.RData", list=c("amazon_predictions", "final_wf", "bestTune", "CV_results"))
-# 
-# # Format table
-# amazon_test$Action <- amazon_predictions$.pred_1
-# results <- amazon_test %>%
-#   rename(Id = id) %>%
-#   select(Id, Action)
-# 
-# # get csv file
-# vroom_write(results, 'AmazonPredsrf.csv', delim = ",")
+# RANDOM FOREST  ----------------------------------------------------------
+
+# Recipe
+my_recipe <- recipe(ACTION~., data=amazon_train) %>%
+  step_mutate_at(all_numeric_predictors(), fn = factor) %>% # turn all numeric features into factors
+  # step_other(all_nominal_predictors(), threshold = .001) %>% # combines categorical values that occur <5% into an "other" value
+  step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION)) %>% #target encoding
+  step_normalize(all_numeric_predictors()) %>%
+  step_pca(all_predictors(), threshold=.9) %>% # Reduce your matrix
+  step_smote(all_outcomes(), neighbors=5)
+  # step_downsample(all_outcomes(), )
+
+
+# Model
+rf_mod <- rand_forest(mtry = tune(),
+                      min_n=tune(),
+                      trees=300) %>%
+  set_engine("ranger") %>%
+  set_mode("classification")
+
+## Workflow
+amazon_workflow <- workflow() %>%
+  add_recipe(my_recipe) %>%
+  add_model(rf_mod) %>%
+  fit(data = amazon_train)
+
+## Set up grid of tuning values
+tuning_grid <- grid_regular(mtry(range = c(1,9)), # How many Variables to choose from
+                            # researches have found log of total variables is enough
+                            min_n(),
+                            levels = 5)
+
+# Set up K-fold CV
+folds <- vfold_cv(amazon_train, v = 5, repeats=1)
+
+# Cross Validation
+CV_results <- amazon_workflow %>%
+  tune_grid(resamples=folds,
+            grid=tuning_grid,
+            metrics=metric_set(roc_auc))
+
+# Find best tuning parameters
+bestTune <- CV_results %>%
+  select_best("roc_auc")
+
+# Finalize workflow
+final_wf <- amazon_workflow %>%
+  finalize_workflow(bestTune) %>%
+  fit(data=amazon_train)
+
+# Predict
+amazon_predictions <- final_wf %>%
+  predict(new_data = amazon_test, type = "prob")
+
+# save(file="./MyFile.RData", list=c("amazon_predictions", "final_wf", "bestTune", "CV_results"))
+
+# Format table
+amazon_test$Action <- amazon_predictions$.pred_1
+results <- amazon_test %>%
+  rename(Id = id) %>%
+  select(Id, Action)
+
+# get csv file
+vroom_write(results, 'AmazonPredsrf.csv', delim = ",")
 
 
 # # Naive Bayes -------------------------------------------------------------
