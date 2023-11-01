@@ -149,11 +149,10 @@ my_recipe <- recipe(ACTION~., data=amazon_train) %>%
   step_mutate_at(all_numeric_predictors(), fn = factor) %>% # turn all numeric features into factors
   # step_other(all_nominal_predictors(), threshold = .001) %>% # combines categorical values that occur <5% into an "other" value
   step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION)) %>% #target encoding
-  step_normalize(all_numeric_predictors()) %>%
-  step_pca(all_predictors(), threshold=.9) %>% # Reduce your matrix
+  # step_normalize(all_numeric_predictors()) %>%
+  # step_pca(all_predictors(), threshold=.9) %>% # Reduce your matrix
+  step_downsample(all_outcomes(), 3) %>%
   step_smote(all_outcomes(), neighbors=5)
-  # step_downsample(all_outcomes(), )
-
 
 # Model
 rf_mod <- rand_forest(mtry = tune(),
