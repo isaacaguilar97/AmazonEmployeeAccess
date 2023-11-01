@@ -147,6 +147,7 @@ amazon_test <- vroom('./test.csv')
 # Recipe
 my_recipe <- recipe(ACTION~., data=amazon_train) %>%
   step_mutate_at(all_numeric_predictors(), fn = factor) %>% # turn all numeric features into factors
+  step_dummy(all_nominal_predictors()) %>% # dummy variable encoding
   # step_other(all_nominal_predictors(), threshold = .001) %>% # combines categorical values that occur <5% into an "other" value
   # step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION)) %>% #target encoding
   # step_normalize(all_numeric_predictors()) %>%
