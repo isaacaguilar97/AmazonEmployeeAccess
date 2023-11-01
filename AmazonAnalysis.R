@@ -325,129 +325,129 @@ vroom_write(results, 'AmazonPredsrf.csv', delim = ",")
 # vroom_write(results, 'AmazonPredsknn.csv', delim = ",")
 
 
-# Support Vector Machine --------------------------------------------------
-# Each point is a vector representing the X's
-# Support vector => vectors that we are goint to use to create the boundaries
-# Usually just for Binary Classification (heavy computation - make reduction)
-
-# Kernel = How you compute the boundary matters
-  # Computation fast way of computing this things
-    # Linear
-    # Polynomial
-    # Radial
-
-# SVM models
-svmPoly <- svm_poly(degree=tune(), cost=tune()) %>% # set or tune
-  set_mode("classification") %>%
-  set_engine("kernlab")
-
-svmRadial <- svm_rbf(rbf_sigma=tune(), cost=tune()) %>% # set or tune
-  set_mode("classification") %>%
-  set_engine("kernlab")
-
-svmLinear <- svm_linear(cost=tune()) %>% # set or tune
-  set_mode("classification") %>%
-  set_engine("kernlab")
-
-## Fit or Tune Model HERE
-
-my_recipe <- recipe(ACTION~., data=amazon_train) %>%
-  step_mutate_at(all_numeric_predictors(), fn = factor) %>% # turn all numeric features into factors
-  step_other(all_nominal_predictors(), threshold = .001) %>% # combines categorical values that occur <5% into an "other" value
-  step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION)) %>% #target encoding
-  step_normalize(all_numeric_predictors()) %>%
-  step_pca(all_predictors(), threshold=.9) %>% # Reduce your matrix
-  step_smote(all_outcomes(), neighbors=5) #Threshold is between 0 and 1
-
-svmP_wf <- workflow() %>%
-  add_recipe(my_recipe) %>%
-  add_model(svmPoly)
-
-svmR_wf <- workflow() %>%
-  add_recipe(my_recipe) %>%
-  add_model(svmRadial)
-
-svmL_wf <- workflow() %>%
-  add_recipe(my_recipe) %>%
-  add_model(svmLinear)
-
-## Tune
-tuning_grid <- grid_regular(degree(),
-                            cost(),
-                            levels = 5)
-
-## Set up K-fold CV
-folds <- vfold_cv(amazon_train, v = 5, repeats=1)
-
-p_results <- svmP_wf %>%
-  tune_grid(resamples=folds,
-            grid=tuning_grid,
-            metrics=metric_set(roc_auc))
-
-r_results <- svmR_wf %>%
-  tune_grid(resamples=folds,
-            grid=tuning_grid,
-            metrics=metric_set(roc_auc))
-
-l_results <- svmL_wf %>%
-  tune_grid(resamples=folds,
-            grid=tuning_grid,
-            metrics=metric_set(roc_auc))
-
-## Find best tuning parameters
-bestTune_p <- p_results %>%
-  select_best("roc_auc")
-
-bestTune_r <- r_results %>%
-  select_best("roc_auc")
-
-bestTune_l <- l_results %>%
-  select_best("roc_auc")
-
-## Finalize workflow
-p_wf <- svmP_wf %>%
-  finalize_workflow(bestTune_p) %>%
-  fit(data=amazon_train)
-
-r_wf <- svmR_wf %>%
-  finalize_workflow(bestTune_r) %>%
-  fit(data=amazon_train)
-
-l_wf <- svmL_wf %>%
-  finalize_workflow(bestTune_l) %>%
-  fit(data=amazon_train)
-
-## Predict
-p_predictions <- p_wf %>%
-  predict(new_data = amazon_test, type = "prob")
-
-r_predictions <- r_wf %>%
-  predict(new_data = amazon_test, type = "prob")
-
-l_predictions <- l_wf %>%
-  predict(new_data = amazon_test, type = "prob")
-
-# Format table
-amazon_test$Action <- p_predictions$.pred_1
-results <- amazon_test %>%
-  rename(Id = id) %>%
-  select(Id, Action)
-
-vroom_write(results, 'AmazonPredsSVMp.csv', delim = ",")
-
-amazon_test$Action <- r_predictions$.pred_1
-results <- amazon_test %>%
-  rename(Id = id) %>%
-  select(Id, Action)
-
-vroom_write(results, 'AmazonPredsSVMr.csv', delim = ",")
-
-amazon_test$Action <- l_predictions$.pred_1
-results <- amazon_test %>%
-  rename(Id = id) %>%
-  select(Id, Action)
-
-vroom_write(results, 'AmazonPredsl.csv', delim = ",")
+# # Support Vector Machine --------------------------------------------------
+# # Each point is a vector representing the X's
+# # Support vector => vectors that we are goint to use to create the boundaries
+# # Usually just for Binary Classification (heavy computation - make reduction)
+# 
+# # Kernel = How you compute the boundary matters
+#   # Computation fast way of computing this things
+#     # Linear
+#     # Polynomial
+#     # Radial
+# 
+# # SVM models
+# svmPoly <- svm_poly(degree=tune(), cost=tune()) %>% # set or tune
+#   set_mode("classification") %>%
+#   set_engine("kernlab")
+# 
+# svmRadial <- svm_rbf(rbf_sigma=tune(), cost=tune()) %>% # set or tune
+#   set_mode("classification") %>%
+#   set_engine("kernlab")
+# 
+# svmLinear <- svm_linear(cost=tune()) %>% # set or tune
+#   set_mode("classification") %>%
+#   set_engine("kernlab")
+# 
+# ## Fit or Tune Model HERE
+# 
+# my_recipe <- recipe(ACTION~., data=amazon_train) %>%
+#   step_mutate_at(all_numeric_predictors(), fn = factor) %>% # turn all numeric features into factors
+#   step_other(all_nominal_predictors(), threshold = .001) %>% # combines categorical values that occur <5% into an "other" value
+#   step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION)) %>% #target encoding
+#   step_normalize(all_numeric_predictors()) %>%
+#   step_pca(all_predictors(), threshold=.9) %>% # Reduce your matrix
+#   step_smote(all_outcomes(), neighbors=5) #Threshold is between 0 and 1
+# 
+# svmP_wf <- workflow() %>%
+#   add_recipe(my_recipe) %>%
+#   add_model(svmPoly)
+# 
+# svmR_wf <- workflow() %>%
+#   add_recipe(my_recipe) %>%
+#   add_model(svmRadial)
+# 
+# svmL_wf <- workflow() %>%
+#   add_recipe(my_recipe) %>%
+#   add_model(svmLinear)
+# 
+# ## Tune
+# tuning_grid <- grid_regular(degree(),
+#                             cost(),
+#                             levels = 5)
+# 
+# ## Set up K-fold CV
+# folds <- vfold_cv(amazon_train, v = 5, repeats=1)
+# 
+# p_results <- svmP_wf %>%
+#   tune_grid(resamples=folds,
+#             grid=tuning_grid,
+#             metrics=metric_set(roc_auc))
+# 
+# r_results <- svmR_wf %>%
+#   tune_grid(resamples=folds,
+#             grid=tuning_grid,
+#             metrics=metric_set(roc_auc))
+# 
+# l_results <- svmL_wf %>%
+#   tune_grid(resamples=folds,
+#             grid=tuning_grid,
+#             metrics=metric_set(roc_auc))
+# 
+# ## Find best tuning parameters
+# bestTune_p <- p_results %>%
+#   select_best("roc_auc")
+# 
+# bestTune_r <- r_results %>%
+#   select_best("roc_auc")
+# 
+# bestTune_l <- l_results %>%
+#   select_best("roc_auc")
+# 
+# ## Finalize workflow
+# p_wf <- svmP_wf %>%
+#   finalize_workflow(bestTune_p) %>%
+#   fit(data=amazon_train)
+# 
+# r_wf <- svmR_wf %>%
+#   finalize_workflow(bestTune_r) %>%
+#   fit(data=amazon_train)
+# 
+# l_wf <- svmL_wf %>%
+#   finalize_workflow(bestTune_l) %>%
+#   fit(data=amazon_train)
+# 
+# ## Predict
+# p_predictions <- p_wf %>%
+#   predict(new_data = amazon_test, type = "prob")
+# 
+# r_predictions <- r_wf %>%
+#   predict(new_data = amazon_test, type = "prob")
+# 
+# l_predictions <- l_wf %>%
+#   predict(new_data = amazon_test, type = "prob")
+# 
+# # Format table
+# amazon_test$Action <- p_predictions$.pred_1
+# results <- amazon_test %>%
+#   rename(Id = id) %>%
+#   select(Id, Action)
+# 
+# vroom_write(results, 'AmazonPredsSVMp.csv', delim = ",")
+# 
+# amazon_test$Action <- r_predictions$.pred_1
+# results <- amazon_test %>%
+#   rename(Id = id) %>%
+#   select(Id, Action)
+# 
+# vroom_write(results, 'AmazonPredsSVMr.csv', delim = ",")
+# 
+# amazon_test$Action <- l_predictions$.pred_1
+# results <- amazon_test %>%
+#   rename(Id = id) %>%
+#   select(Id, Action)
+# 
+# vroom_write(results, 'AmazonPredsl.csv', delim = ",")
 
 
 stopCluster(cl)
